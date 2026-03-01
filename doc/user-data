@@ -1,0 +1,31 @@
+#cloud-config
+
+# 1. IDENTIDADE E PRIVILÉGIOS
+# Define o usuário padrão da AWS, garante poderes absolutos de root sem exigir
+# senha para o comando sudo e destranca a conta para acesso interativo.
+users:
+  - name: ec2-user
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+
+# 2. CREDENCIAIS DE ACESSO
+# Crava a senha em texto plano e impede que o sistema force a troca
+# obrigatória durante o primeiro login.
+chpasswd:
+  list: |
+    ec2-user:AwsLinux2023!  # Substitua AwsLinux2023! por uma senha de sua escolha
+  expire: False
+
+# 3. DIRETIVA PRIMÁRIA DE SSH
+# Instrui o serviço base a aceitar senhas (embora a AWS tente bloquear isso depois).
+ssh_pwauth: True
+
+# 4. MANIPULAÇÃO DE ARQUITETURA
+# Forja um arquivo com prioridade máxima (99) dentro do diretório de configurações.
+# Esta ação sobrepõe qualquer política de bloqueio nativa da nuvem e garante
+# que o acesso remoto via senha funcione no momento em que a máquina ligar.
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-custom-ssh.conf
+    content: |
+      PasswordAuthentication yes
+    permissions: '0644'
